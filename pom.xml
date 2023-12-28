@@ -31,7 +31,7 @@
     <maven.compiler.release>${java.version}</maven.compiler.release>
 
     <!-- 3rd party dependencies -->
-    <immutables-value.version>2.9.3</immutables-value.version>
+    <immutables-value.version>2.10.0</immutables-value.version>
 
     <!-- plugin dependencies -->
     <palantir-java-format.version>2.39.0</palantir-java-format.version>
