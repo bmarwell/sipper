@@ -13,3 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.github.bmarwell.sipper.api;
+
+/**
+ * The actual SIP client which can open connections.
+ *
+ * <p>Instances of SipClient are to be obtained via the ServiceLoader mechanism, more specifically via
+ * the SipClientBuilder class.</p>
+ */
+public interface SipClient {
+
+    SipConnection connect();
+}

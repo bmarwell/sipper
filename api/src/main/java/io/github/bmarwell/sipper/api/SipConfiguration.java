@@ -13,3 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.github.bmarwell.sipper.api;
+
+import org.immutables.value.Value;
+
+/**
+ * Configuration used by SipClientBuilder, which will be passed to the created SipClient instance.
+ */
+@Value.Immutable
+@Value.Style(jdkOnly = true, stagedBuilder = true)
+public interface SipConfiguration {}

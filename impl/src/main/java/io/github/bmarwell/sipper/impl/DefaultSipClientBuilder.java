@@ -13,3 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.github.bmarwell.sipper.impl;
+
+import io.github.bmarwell.sipper.api.SipClient;
+import io.github.bmarwell.sipper.api.SipClientBuilder;
+import io.github.bmarwell.sipper.api.SipConfiguration;
+
+public class DefaultSipClientBuilder implements SipClientBuilder {
+
+    @Override
+    public SipClient create(SipConfiguration sipConfiguration) {
+        return new DefaultSipClient(sipConfiguration);
+    }
+}

@@ -13,3 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.github.bmarwell.sipper.impl;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import io.github.bmarwell.sipper.api.ImmutableSipConfiguration;
+import io.github.bmarwell.sipper.api.SipClientBuilder;
+import org.junit.jupiter.api.Test;
+
+class DefaultSipClientBuilderTest {
+
+    @Test
+    void can_be_instantiated_via_ServiceLoader() {
+        // given
+        var sc = ImmutableSipConfiguration.builder().build();
+
+        // when
+        final var sipClient = SipClientBuilder.build(sc);
+
+        // then
+        assertThat(sipClient).isNotNull();
+    }
+}
