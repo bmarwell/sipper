@@ -1,0 +1,20 @@
+= SIPper
+:toc: macro
+
+A SIP (Session Initiation Protocol for soft phones) library for Java 21+ which doesn't suck (pun intended).
+
+toc::[]
+
+== Development status
+
+Started, no releases.
+
+== API stability
+
+None yet, goal is to have good stability before 0.4.0.
+
+== Implementation details
+
+This library will make use of the Java 6+ Service Loader mechanisms.
+As a developer, you can code against the API only and have only the API in your class path whilst compiling.
+But for the runtime, the implementation will be needed as well.
