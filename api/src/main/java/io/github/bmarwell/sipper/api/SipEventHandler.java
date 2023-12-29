@@ -15,4 +15,4 @@
  */
 package io.github.bmarwell.sipper.api;
 
-public class SipEventHandler {}
+public interface SipEventHandler {}

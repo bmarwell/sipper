@@ -161,7 +161,7 @@
         <configuration combine.children="append">
           <annotationProcessorPaths />
           <compilerArgs>
-            <arg>-Xlint:all,-processing</arg>
+            <arg>-Xlint:all,-processing,-classfile</arg>
           </compilerArgs>
         </configuration>
         <executions>
