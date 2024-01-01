@@ -15,11 +15,16 @@
  */
 package io.github.bmarwell.sipper.impl;
 
+import io.github.bmarwell.sipper.api.RegisteredSipConnection;
 import io.github.bmarwell.sipper.api.SipClient;
 import io.github.bmarwell.sipper.api.SipConfiguration;
-import io.github.bmarwell.sipper.api.SipConnection;
+import io.github.bmarwell.sipper.impl.internal.SipConnectionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DefaultSipClient implements SipClient {
+
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultSipClient.class);
 
     private final SipConfiguration sipConfiguration;
 
@@ -28,9 +33,15 @@ public class DefaultSipClient implements SipClient {
     }
 
     @Override
-    public SipConnection connect() {
-        // TODO: implement
-        throw new UnsupportedOperationException(
-                "not yet implemented: [io.github.bmarwell.sipper.impl.DefaultSipClient::connect].");
+    public RegisteredSipConnection connect() {
+        final var sipConnectionFactory = new SipConnectionFactory(this.sipConfiguration);
+
+        LOG.trace("Connecting…");
+        final var connectedSipConnection = sipConnectionFactory.build();
+
+        LOG.trace("Registering…");
+        final var registeredSipConnection = sipConnectionFactory.register(connectedSipConnection);
+
+        return registeredSipConnection;
     }
 }

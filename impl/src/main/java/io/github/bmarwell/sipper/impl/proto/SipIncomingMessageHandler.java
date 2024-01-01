@@ -13,13 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.github.bmarwell.sipper.api;
+package io.github.bmarwell.sipper.impl.proto;
 
-public interface SipConnection extends AutoCloseable {
+public interface SipIncomingMessageHandler {
+    void accept(String message);
 
-    void listen(SipEventHandler sipEventHandler);
-
-    boolean isConnected();
-
-    boolean isRegistered();
+    void remove(String message);
 }
