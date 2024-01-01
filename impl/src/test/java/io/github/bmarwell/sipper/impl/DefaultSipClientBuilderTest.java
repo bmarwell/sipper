@@ -26,7 +26,12 @@ class DefaultSipClientBuilderTest {
     @Test
     void can_be_instantiated_via_ServiceLoader() {
         // given
-        var sc = ImmutableSipConfiguration.builder().build();
+        var sc = ImmutableSipConfiguration.builder()
+                .registrar("")
+                .sipId("")
+                .loginUserId("")
+                .loginPassword("")
+                .build();
 
         // when
         final var sipClient = SipClientBuilder.build(sc);

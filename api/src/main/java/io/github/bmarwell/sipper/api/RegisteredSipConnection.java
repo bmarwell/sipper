@@ -15,11 +15,4 @@
  */
 package io.github.bmarwell.sipper.api;
 
-public interface SipConnection extends AutoCloseable {
-
-    void listen(SipEventHandler sipEventHandler);
-
-    boolean isConnected();
-
-    boolean isRegistered();
-}
+public interface RegisteredSipConnection extends SipConnection {}
