@@ -23,9 +23,6 @@ import io.github.bmarwell.sipper.impl.ip.IpUtil;
 import io.github.bmarwell.sipper.impl.proto.NotifyingSipIncomingAuthenticationRequestHandler;
 import io.github.bmarwell.sipper.impl.proto.QueueingSipIncomingMessageHandler;
 import io.github.bmarwell.sipper.impl.proto.SipMessageFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -35,6 +32,8 @@ import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.random.RandomGeneratorFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SipConnectionFactory {
 

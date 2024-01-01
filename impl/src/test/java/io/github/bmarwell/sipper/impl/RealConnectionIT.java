@@ -15,15 +15,14 @@
  */
 package io.github.bmarwell.sipper.impl;
 
+import static org.awaitility.Awaitility.await;
+
 import io.github.bmarwell.sipper.api.ImmutableSipConfiguration;
 import io.github.bmarwell.sipper.api.SipClientBuilder;
 import io.github.bmarwell.sipper.api.SipConnection;
+import java.util.concurrent.TimeUnit;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import java.util.concurrent.TimeUnit;
-
-import static org.awaitility.Awaitility.await;
 
 class RealConnectionIT {
     @Test
