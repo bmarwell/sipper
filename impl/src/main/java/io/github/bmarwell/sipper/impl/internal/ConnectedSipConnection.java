@@ -26,6 +26,8 @@ import java.util.StringJoiner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,24 +36,32 @@ public class ConnectedSipConnection implements SipConnection {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConnectedSipConnection.class);
 
+    private final AtomicLong cseq = new AtomicLong(10);
+
     private final Socket socket;
 
     private final SocketInConnectionReader inReader;
 
     private final BufferedOutputStream out;
     private final PrintWriter outWriter;
-    private ReentrantLock outWriterLock = new ReentrantLock();
+    private final ReentrantLock outWriterLock = new ReentrantLock();
 
     private final ExecutorService executorService;
     private final Future<?> inReaderThread;
+    private final String tag;
+    private final String callId;
 
-    public ConnectedSipConnection(Socket socket, BufferedOutputStream out, SocketInConnectionReader inReader) {
+    public ConnectedSipConnection(
+            Socket socket, BufferedOutputStream out, SocketInConnectionReader inReader, String tag, String callId) {
         this.socket = socket;
         this.out = out;
         this.outWriter = new PrintWriter(out, false, StandardCharsets.UTF_8);
         this.inReader = inReader;
         this.executorService = Executors.newVirtualThreadPerTaskExecutor();
         this.inReaderThread = this.executorService.submit(inReader);
+
+        this.tag = tag;
+        this.callId = callId;
     }
 
     @Override
@@ -84,12 +94,27 @@ public class ConnectedSipConnection implements SipConnection {
 
     @Override
     public void close() throws Exception {
+        this.inReader.interrupt();
         this.inReaderThread.cancel(true);
+        this.executorService.shutdownNow();
+        this.executorService.awaitTermination(10, TimeUnit.MILLISECONDS);
         this.socket.close();
     }
 
-    protected Socket getSocket() {
+    public long getAndUpdateCseq() {
+        return this.cseq.getAndUpdate(operand -> operand + 1L);
+    }
+
+    public Socket getSocket() {
         return this.socket;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public String getCallId() {
+        return callId;
     }
 
     protected BufferedOutputStream getOut() {
