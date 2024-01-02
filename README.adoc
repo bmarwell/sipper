@@ -5,7 +5,7 @@ A SIP (Session Initiation Protocol for soft phones) library for Java 21+ which d
 
 image:https://github.com/bmarwell/sipper/actions/workflows/maven-build.yml/badge.svg[Maven CI,link=https://github.com/bmarwell/sipper/actions/workflows/maven-build.yml]
 image:https://img.shields.io/badge/License-Apache_2.0-blue.svg[License,link=https://opensource.org/licenses/Apache-2.0]
-image:https://codecov.io/gh/bmarwell/social-metricbot/branch/main/graph/badge.svg?token=OkJW0qKkJs[codecov.io,link=https://codecov.io/gh/bmarwell/social-metricbot]
+image:https://codecov.io/gh/bmarwell/sipper/graph/badge.svg?token=W70UTK1O1V[codecov.io,link=https://codecov.io/gh/bmarwell/sipper]
 image:https://img.shields.io/badge/renovate-enabled-brightgreen.svg[Renovate,link=https://renovatebot.com]
 
 toc::[]
