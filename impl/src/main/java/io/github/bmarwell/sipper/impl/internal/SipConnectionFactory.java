@@ -20,9 +20,7 @@ import io.github.bmarwell.sipper.api.SipConfiguration;
 import io.github.bmarwell.sipper.api.SipConnection;
 import io.github.bmarwell.sipper.impl.SocketInConnectionReader;
 import io.github.bmarwell.sipper.impl.ip.IpUtil;
-import io.github.bmarwell.sipper.impl.proto.NotifyingSipIncomingAuthenticationRequestHandler;
-import io.github.bmarwell.sipper.impl.proto.QueueingSipIncomingMessageHandler;
-import io.github.bmarwell.sipper.impl.proto.SipMessageFactory;
+import io.github.bmarwell.sipper.impl.proto.*;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -49,8 +47,16 @@ public class SipConnectionFactory {
     }
 
     public SipConnection build() {
+        final var tagBytes = new byte[12];
+        final var callIdBytes = new byte[12];
+        RandomGeneratorFactory.getDefault().create().nextBytes(tagBytes);
+        RandomGeneratorFactory.getDefault().create().nextBytes(callIdBytes);
+        final var encoder = Base64.getEncoder().withoutPadding();
+        var tag = encoder.encodeToString(tagBytes).replaceAll("/", "g");
+        var callId = encoder.encodeToString(callIdBytes).replaceAll("/", "g");
+
         try {
-            return buildSocketSipConnection();
+            return buildSocketSipConnection(tag, callId);
         } catch (IOException ioException) {
             LOG.error("Problem creating SipConnection.", ioException);
             throw new UncheckedIOException(ioException);
@@ -58,61 +64,51 @@ public class SipConnectionFactory {
     }
 
     public RegisteredSipConnection register(SipConnection sipConnection) {
-        final var tagBytes = new byte[12];
-        final var callIdBytes = new byte[12];
-        RandomGeneratorFactory.getDefault().create().nextBytes(tagBytes);
-        RandomGeneratorFactory.getDefault().create().nextBytes(callIdBytes);
-        var tag = Base64.getEncoder().encodeToString(tagBytes);
-        var callId = Base64.getEncoder().encodeToString(callIdBytes);
-
         final var connectedSipConnection = (ConnectedSipConnection) sipConnection;
 
-        final var registerPreflight = this.messageFactory.getRegisterPreflight(
-                tag, callId, connectedSipConnection.getSocket(), IpUtil.getPublicIpv4());
+        final var registerPreflight =
+                this.messageFactory.getRegisterPreflight(IpUtil.getPublicIpv4(), connectedSipConnection);
 
-        registerPreflight(connectedSipConnection, registerPreflight);
+        CompletableFuture.supplyAsync(() -> this.registerPreflight(connectedSipConnection, registerPreflight))
+                .orTimeout(2_000L, TimeUnit.MILLISECONDS)
+                .thenAcceptAsync(
+                        (SipAuthenticationRequest authRequest) -> doRegister(authRequest, connectedSipConnection))
+                .orTimeout(2_000L, TimeUnit.MILLISECONDS)
+                .join();
 
         return new DefaultRegisteredSipConnection(connectedSipConnection);
     }
 
-    public void registerPreflight(ConnectedSipConnection connectedSipConnection, String message) {
+    private void doRegister(SipAuthenticationRequest authRequest, ConnectedSipConnection connectedSipConnection) {
+        final var msgHandler = new NotifyingSipLoginRequestHandler(
+                connectedSipConnection.getInReader().getMsgHandler());
+
+        final var login = this.messageFactory.getLogin(authRequest, connectedSipConnection);
+        connectedSipConnection.writeAndFlush(login);
+        msgHandler.run();
+
+        LOG.debug("Login successful");
+    }
+
+    public SipAuthenticationRequest registerPreflight(ConnectedSipConnection connectedSipConnection, String message) {
         final var inReader = connectedSipConnection.getInReader();
 
         connectedSipConnection.writeAndFlush(message);
 
         final var msgHandler = new NotifyingSipIncomingAuthenticationRequestHandler(inReader.getMsgHandler());
-        final var join = CompletableFuture.runAsync(msgHandler)
-                // wait 2 secs
-                .orTimeout(this.sipConfiguration.getReadTimeout().toMillis(), TimeUnit.MILLISECONDS)
-                // then act
-                .handle((var result, var error) -> {
-                    if (error != null) {
-                        LOG.error("Error occurred while waiting: ", error);
-                        throw new IllegalStateException("Invalid or missing reply while registering", error);
-                    }
+        msgHandler.run();
 
-                    LOG.info("Auth request: " + msgHandler.getSipAuthenticationRequest());
-                    return msgHandler.getSipAuthenticationRequest();
-                })
-                .whenComplete(((sipAuthenticationRequest, error) -> {
-                    if (error != null) {
-                        return;
-                    }
-
-                    final var login = this.messageFactory.getLogin(sipAuthenticationRequest);
-                    connectedSipConnection.writeAndFlush(login);
-                }))
-                .join();
+        return msgHandler.getSipAuthenticationRequest();
     }
 
-    protected ConnectedSipConnection buildSocketSipConnection() throws IOException {
+    protected ConnectedSipConnection buildSocketSipConnection(String tag, String callId) throws IOException {
         var socket = createSocket();
         var out = new BufferedOutputStream(socket.getOutputStream());
 
         var onResponse = new QueueingSipIncomingMessageHandler();
         var inReader = new SocketInConnectionReader(socket.getInputStream(), onResponse);
 
-        return new ConnectedSipConnection(socket, out, inReader);
+        return new ConnectedSipConnection(socket, out, inReader, tag, callId);
     }
 
     protected Socket createSocket() throws IOException {
@@ -121,7 +117,7 @@ public class SipConnectionFactory {
         final var remoteSocketAddress =
                 new InetSocketAddress(IpUtil.getRegistrarEndpoint(this.sipConfiguration.getRegistrar()), 5060);
 
-        LOG.info("Waiting for connection to succeed.");
+        LOG.trace("Waiting for connection to succeed.");
         socket.connect(
                 remoteSocketAddress,
                 Math.toIntExact(this.sipConfiguration.getConnectTimeout().toMillis()));

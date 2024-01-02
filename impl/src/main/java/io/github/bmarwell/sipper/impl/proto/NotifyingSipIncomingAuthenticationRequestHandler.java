@@ -16,13 +16,12 @@
 package io.github.bmarwell.sipper.impl.proto;
 
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class NotifyingSipIncomingAuthenticationRequestHandler implements Runnable {
+public class NotifyingSipIncomingAuthenticationRequestHandler extends AbstractNotifyingMessageHandler
+        implements Runnable {
 
     private static final Pattern ALGORITHM = Pattern.compile(".*\\balgorithm=(?<algo>[a-zA-Z0-9]+)[,$].*");
     private static final Pattern REALM = Pattern.compile(".*\\brealm=\"(?<realm>[a-zA-Z0-9.-]+)\".*");
@@ -30,49 +29,28 @@ public class NotifyingSipIncomingAuthenticationRequestHandler implements Runnabl
     private static final Pattern QOP = Pattern.compile(".*\\bqop=\"(?<qop>[a-zA-Z0-9]+)\".*");
 
     private static final Logger LOG = LoggerFactory.getLogger(NotifyingSipIncomingAuthenticationRequestHandler.class);
-    private final QueueingSipIncomingMessageHandler queueingSipIncomingMessageHandler;
 
-    private boolean interrupted = false;
     private SipAuthenticationRequest sipAuthenticationRequest;
 
     public NotifyingSipIncomingAuthenticationRequestHandler(
             QueueingSipIncomingMessageHandler queueingSipIncomingMessageHandler) {
-        this.queueingSipIncomingMessageHandler = queueingSipIncomingMessageHandler;
+        super(queueingSipIncomingMessageHandler);
     }
 
     @Override
-    public void run() {
-        AtomicReference<String> messageFound = new AtomicReference<>();
+    boolean matchesMessage(String message) {
+        return message.startsWith("SIP/2.0 401 Unauthorized")
+                && message.toLowerCase(Locale.ROOT).contains("www-authenticate");
+    }
 
-        while (messageFound.get() == null) {
-            try {
-                TimeUnit.MILLISECONDS.sleep(200L);
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                this.interrupted = true;
-                return;
-            }
-
-            if (this.interrupted) {
-                return;
-            }
-
-            var msgFound = this.queueingSipIncomingMessageHandler.getMessages().stream()
-                    .filter(msg -> msg.startsWith("SIP/2.0 401 Unauthorized"))
-                    .findFirst();
-            if (msgFound.isPresent()) {
-                this.queueingSipIncomingMessageHandler.remove(msgFound.orElseThrow());
-                messageFound.set(msgFound.orElseThrow());
-                break;
-            }
-        }
-
+    @Override
+    void onMessageReceived(String message) {
         // Parse message
-        final var message = messageFound.get();
-        LOG.info("Parsing message: [{}].", message);
+        LOG.trace("Parsing message: [{}].", message);
         final var lines = message.lines();
         final var wwwAuthOpt = lines.filter(l -> l.toLowerCase(Locale.ROOT).startsWith("www-authenticate:"))
                 .findFirst();
+
         if (wwwAuthOpt.isEmpty()) {
             throw new IllegalArgumentException(
                     "Message has illegal content, no line starts with 'WWW-Authenticate: '. : " + message);
@@ -104,12 +82,7 @@ public class NotifyingSipIncomingAuthenticationRequestHandler implements Runnabl
         final var qop = qopMatcher.group("qop");
 
         this.sipAuthenticationRequest = new SipAuthenticationRequest(algo, realm, nonce, qop);
-        LOG.info("Setting request: [{}].", sipAuthenticationRequest);
-    }
-
-    public void interrupt() {
-        this.interrupted = true;
-        Thread.currentThread().interrupt();
+        LOG.trace("Setting request: [{}].", sipAuthenticationRequest);
     }
 
     public SipAuthenticationRequest getSipAuthenticationRequest() {
