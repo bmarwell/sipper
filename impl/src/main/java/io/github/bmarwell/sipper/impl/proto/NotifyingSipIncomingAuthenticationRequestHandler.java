@@ -38,14 +38,15 @@ public class NotifyingSipIncomingAuthenticationRequestHandler extends AbstractNo
     }
 
     @Override
-    boolean matchesMessage(String message) {
-        return message.startsWith("SIP/2.0 401 Unauthorized")
-                && message.toLowerCase(Locale.ROOT).contains("www-authenticate");
+    boolean matchesMessage(RawSipMessage message) {
+        return message.rawMessageHeader().startsWith("SIP/2.0 401 Unauthorized")
+                && message.rawMessageHeader().toLowerCase(Locale.ROOT).contains("www-authenticate");
     }
 
     @Override
-    void onMessageReceived(String message) {
+    void onMessageReceived(RawSipMessage rawSipMessage) {
         // Parse message
+        var message = rawSipMessage.rawMessageHeader();
         LOG.trace("Parsing message: [{}].", message);
         final var lines = message.lines();
         final var wwwAuthOpt = lines.filter(l -> l.toLowerCase(Locale.ROOT).startsWith("www-authenticate:"))

@@ -24,22 +24,28 @@ public class QueueingSipIncomingMessageHandler implements SipIncomingMessageHand
 
     private static final Logger LOG = LoggerFactory.getLogger(QueueingSipIncomingMessageHandler.class);
 
-    private final ArrayList<String> messages = new ArrayList<>();
+    private final ArrayList<RawSipMessage> messages = new ArrayList<>();
 
     @Override
-    public void accept(String message) {
-        if (LOG.isTraceEnabled()) {
-            LOG.trace("Incoming message:\n[{}]", message);
-        }
+    public void accept(RawSipMessage sipMessage) {
+        LOG.trace("Incoming message:\n[{}]", sipMessage);
 
-        this.messages.add(message);
+        switch (sipMessage.method()) {
+            case "REGISTER":
+                this.messages.add(sipMessage);
+                break;
+            case "INVITE":
+            default:
+                throw new UnsupportedOperationException(
+                        "not yet implemented: [io.github.bmarwell.sipper.impl.proto.QueueingSipIncomingMessageHandler::accept].");
+        }
     }
 
-    public List<String> getMessages() {
+    public List<RawSipMessage> getMessages() {
         return List.copyOf(this.messages);
     }
 
-    public void remove(String message) {
+    public void remove(RawSipMessage message) {
         this.messages.remove(message);
     }
 }

@@ -27,9 +27,9 @@ public abstract class AbstractNotifyingMessageHandler implements Runnable {
         this.queueingSipIncomingMessageHandler = queueingSipIncomingMessageHandler;
     }
 
-    abstract void onMessageReceived(String message);
+    abstract void onMessageReceived(RawSipMessage message);
 
-    abstract boolean matchesMessage(String message);
+    abstract boolean matchesMessage(RawSipMessage message);
 
     @Override
     public void run() {

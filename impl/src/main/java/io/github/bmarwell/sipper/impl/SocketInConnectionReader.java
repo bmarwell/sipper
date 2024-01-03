@@ -16,11 +16,15 @@
 package io.github.bmarwell.sipper.impl;
 
 import io.github.bmarwell.sipper.impl.proto.QueueingSipIncomingMessageHandler;
+import io.github.bmarwell.sipper.impl.proto.RawSipMessage;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.SocketException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,12 +32,14 @@ public class SocketInConnectionReader implements Runnable {
 
     private static final Logger LOG = LoggerFactory.getLogger(SocketInConnectionReader.class);
 
-    private final BufferedReader socketInput;
+    private ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
+
+    private final BufferedReader socketReader;
     private final QueueingSipIncomingMessageHandler msgHandler;
     private boolean interrupted = false;
 
     public SocketInConnectionReader(InputStream socketInput, QueueingSipIncomingMessageHandler msgHandler) {
-        this.socketInput = new BufferedReader(new InputStreamReader(socketInput));
+        this.socketReader = new BufferedReader(new InputStreamReader(socketInput));
         this.msgHandler = msgHandler;
     }
 
@@ -44,7 +50,7 @@ public class SocketInConnectionReader implements Runnable {
         try {
             checkInterrupted();
             LOG.trace("Now listening for incoming messages");
-            while (!this.interrupted && (readLine = this.socketInput.readLine()) != null) {
+            while (!this.interrupted && (readLine = this.socketReader.readLine()) != null) {
                 checkInterrupted();
 
                 if (this.interrupted) {
@@ -54,10 +60,27 @@ public class SocketInConnectionReader implements Runnable {
                 currentMessage.append(readLine);
                 currentMessage.append('\n');
 
-                if (currentMessage.toString().endsWith("\n\n")) {
+                final var currentMessageString = currentMessage.toString();
+                if (currentMessageString.endsWith("\n\n")) {
                     checkInterrupted();
-                    this.msgHandler.accept(currentMessage.toString());
                     LOG.trace("Received message:\n[{}]", currentMessage);
+
+                    final RawSipMessage rawSipMessage;
+
+                    // probably end of message, UNLESS it is a header with a following body.
+                    if (isMessageWithBody(currentMessageString)) {
+                        LOG.trace("Message with body");
+                        rawSipMessage = processMessageWithBody(currentMessageString);
+                    } else {
+                        rawSipMessage = new RawSipMessage(currentMessageString);
+                    }
+
+                    try {
+                        CompletableFuture.runAsync(() -> this.msgHandler.accept(rawSipMessage), executorService);
+                    } catch (Exception e) {
+                        LOG.trace("Unable to process message.", e);
+                    }
+
                     currentMessage = new StringBuilder();
                 }
             }
@@ -72,10 +95,45 @@ public class SocketInConnectionReader implements Runnable {
         }
     }
 
+    private static boolean isMessageWithBody(String currentMessageString) {
+        return currentMessageString.startsWith("INVITE")
+                && currentMessageString.contains("\nContent-Length: ")
+                && !currentMessageString.contains("\nContent-Length: 0\n");
+    }
+
+    private RawSipMessage processMessageWithBody(String currentMessageString) throws IOException {
+        final String bodyLengthString = currentMessageString
+                .lines()
+                .filter(line -> line.startsWith("Content-Length: "))
+                .findFirst()
+                .orElseThrow();
+        final var bodyLengthNumber = bodyLengthString.split(":", 2)[1].trim();
+        final var bodyLengthOpt = LangUtil.isIntegerOrEmpty(bodyLengthNumber);
+
+        if (bodyLengthOpt.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Illegal message: Content length is not a number! " + currentMessageString);
+        }
+
+        final var bodyLength = bodyLengthOpt.orElseThrow();
+
+        final var bodyContent = new char[bodyLength];
+        LOG.trace("Reading [{}] bytes of data", bodyLength);
+        final var read = this.socketReader.read(bodyContent, 0, bodyLength);
+        if (read < bodyLength) {
+            LOG.warn("Not enough bytes read! Expected [" + bodyLength + "] but got " + read + "!");
+        }
+
+        final var rawSipMessage = new RawSipMessage(currentMessageString, bodyContent);
+        LOG.trace("Received raw sip message: [{}]", rawSipMessage);
+        return rawSipMessage;
+    }
+
     private void checkInterrupted() throws InterruptedException {
         if (Thread.currentThread().isInterrupted() || Thread.interrupted() || this.interrupted) {
             this.interrupted = true;
             Thread.currentThread().interrupt();
+            this.executorService.shutdownNow();
             throw new InterruptedException();
         }
     }
@@ -86,6 +144,7 @@ public class SocketInConnectionReader implements Runnable {
 
     public void interrupt() {
         this.interrupted = true;
+        this.executorService.shutdownNow();
         Thread.currentThread().interrupt();
     }
 }
