@@ -22,8 +22,8 @@ public class NotifyingSipLoginRequestHandler extends AbstractNotifyingMessageHan
     }
 
     @Override
-    boolean matchesMessage(String message) {
-        return matchesOkMessage(message);
+    boolean matchesMessage(RawSipMessage message) {
+        return matchesOkMessage(message.rawMessageHeader());
     }
 
     private boolean matchesOkMessage(String message) {
@@ -31,8 +31,8 @@ public class NotifyingSipLoginRequestHandler extends AbstractNotifyingMessageHan
     }
 
     @Override
-    void onMessageReceived(String message) {
-        if (message.startsWith("SIP/2.0 200 OK")) {
+    void onMessageReceived(RawSipMessage message) {
+        if (message.rawMessageHeader().startsWith("SIP/2.0 200 OK")) {
             return;
         }
 

@@ -13,10 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.github.bmarwell.sipper.impl.proto;
+package io.github.bmarwell.sipper.impl;
 
-public interface SipIncomingMessageHandler {
-    void accept(RawSipMessage sipMessage);
+import java.util.OptionalInt;
 
-    void remove(RawSipMessage message);
+public final class LangUtil {
+
+    public static OptionalInt isIntegerOrEmpty(String maybeNumber) {
+        try {
+            final var parsedLong = Integer.parseInt(maybeNumber);
+            return OptionalInt.of(parsedLong);
+        } catch (NumberFormatException nfe) {
+            return OptionalInt.empty();
+        }
+    }
 }
