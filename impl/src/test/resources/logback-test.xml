@@ -24,7 +24,7 @@
     </encoder>
   </appender>
 
-  <logger name="io.github.bmarwell.sipper" level="trace" />
+  <logger name="io.github.bmarwell.sipper" level="info" />
   <!--logger name="io.github.bmarwell.sipper.impl.proto.QueueingSipIncomingMessageHandler" level="trace" /-->
 
   <root level="warn">

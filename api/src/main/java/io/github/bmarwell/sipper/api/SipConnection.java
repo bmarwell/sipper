@@ -15,6 +15,8 @@
  */
 package io.github.bmarwell.sipper.api;
 
+import java.net.InetAddress;
+
 /**
  * A sip connection is a handle which denotes an open and (network-wise) valid connection to a SIP registrar.
  *
@@ -27,4 +29,10 @@ public interface SipConnection extends AutoCloseable {
     boolean isConnected();
 
     boolean isRegistered();
+
+    /**
+     * Returns the public IP address which was used to open the connection.
+     * @return the public IP address which was used to open the connection.
+     */
+    InetAddress getPublicIp();
 }

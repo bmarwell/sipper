@@ -17,6 +17,7 @@ package io.github.bmarwell.sipper.impl;
 
 import io.github.bmarwell.sipper.impl.proto.QueueingSipIncomingMessageHandler;
 import io.github.bmarwell.sipper.impl.proto.RawSipMessage;
+import io.github.bmarwell.sipper.impl.util.LangUtil;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;

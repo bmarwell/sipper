@@ -60,8 +60,7 @@ public class SipConnectionFactory {
     public RegisteredSipConnection register(SipConnection sipConnection) {
         final var connectedSipConnection = (ConnectedSipConnection) sipConnection;
 
-        final var registerPreflight =
-                this.messageFactory.getRegisterPreflight(IpUtil.getPublicIpv4(), connectedSipConnection);
+        final var registerPreflight = this.messageFactory.getRegisterPreflight(connectedSipConnection);
 
         CompletableFuture.supplyAsync(() -> this.registerPreflight(connectedSipConnection, registerPreflight))
                 .orTimeout(2_000L, TimeUnit.MILLISECONDS)
@@ -82,9 +81,8 @@ public class SipConnectionFactory {
                 connectedSipConnection,
                 this.sipConfiguration.getLoginUserId(),
                 this.sipConfiguration.getLoginPassword());
-        connectedSipConnection.writeAndFlush(login);
-        connectedSipConnection.setAuthorizationString(
-                this.messageFactory.getAuthorization().orElseThrow());
+        connectedSipConnection.writeAndFlush(login.message());
+        connectedSipConnection.setAuthorizationString(login.authorization());
         msgHandler.run();
 
         LOG.debug("Login successful");
@@ -115,7 +113,8 @@ public class SipConnectionFactory {
                 this.sipConfiguration.getRegistrar(),
                 this.sipConfiguration.getSipId(),
                 tag,
-                callId);
+                callId,
+                IpUtil.getPublicIpv4());
     }
 
     protected Socket createSocket() throws IOException {
