@@ -15,6 +15,8 @@
  */
 package io.github.bmarwell.sipper.api;
 
+import java.io.IOException;
+
 /**
  * The actual SIP client which can open connections.
  *
@@ -23,5 +25,15 @@ package io.github.bmarwell.sipper.api;
  */
 public interface SipClient {
 
-    SipConnection connect();
+    /**
+     * The connect method will, despite its name, not only try to establish a network connection, but also
+     * send LOGIN commands via the REGISTER method.
+     *
+     * <p>The caller is supposed to check whether this connection is a {@link RegisteredSipConnection}.</p>
+     * @return a SipConnection, possibly a {@link RegisteredSipConnection}.
+     *
+     * @throws IOException when there is a problem establishing the network connection via opening a TCP socket.
+     * @throws RuntimeException When the public IPv4 could not be determined. TODO make a dedicated exception.
+     */
+    SipConnection connect() throws IOException;
 }

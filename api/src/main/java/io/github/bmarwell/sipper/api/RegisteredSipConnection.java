@@ -15,4 +15,8 @@
  */
 package io.github.bmarwell.sipper.api;
 
+/**
+ * A SipConnection with the {@literal "registered"} status, i.e. the connection did send a REGISTER command which was accepted
+ * by the registrar.
+ */
 public interface RegisteredSipConnection extends SipConnection {}

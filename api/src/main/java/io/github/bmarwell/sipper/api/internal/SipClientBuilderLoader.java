@@ -21,7 +21,11 @@ import java.util.ServiceLoader;
 /**
  * Internal: Loads a SipClientBuilder implementation via Java {@link ServiceLoader} mechanisms.
  */
-public class SipClientBuilderLoader {
+public final class SipClientBuilderLoader {
+
+    private SipClientBuilderLoader() {
+        // Util.
+    }
 
     public static SipClientBuilder loadImplementation() {
         final var optSipClientBuilder =

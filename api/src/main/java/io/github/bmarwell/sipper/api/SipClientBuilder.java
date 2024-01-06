@@ -16,6 +16,7 @@
 package io.github.bmarwell.sipper.api;
 
 import io.github.bmarwell.sipper.api.internal.SipClientBuilderLoader;
+import java.util.Objects;
 
 /**
  * The public builder which is to be used to obtain an instance of {@link SipClient}.
@@ -28,6 +29,7 @@ public interface SipClientBuilder {
      * @return a SIP client instance.
      */
     static SipClient build(SipConfiguration sipConfiguration) {
+        Objects.requireNonNull(sipConfiguration, "sipConfiguration");
         final var sipClientBuilder = SipClientBuilderLoader.loadImplementation();
         return sipClientBuilder.create(sipConfiguration);
     }
