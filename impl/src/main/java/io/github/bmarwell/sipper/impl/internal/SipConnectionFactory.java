@@ -83,8 +83,14 @@ public class SipConnectionFactory {
         final var msgHandler = new NotifyingSipLoginRequestHandler(
                 connectedSipConnection.getInReader().getMsgHandler());
 
-        final var login = this.messageFactory.getLogin(authRequest, connectedSipConnection);
+        final var login = this.messageFactory.getLogin(
+                authRequest,
+                connectedSipConnection,
+                this.sipConfiguration.getLoginUserId(),
+                this.sipConfiguration.getLoginPassword());
         connectedSipConnection.writeAndFlush(login);
+        connectedSipConnection.setAuthorizationString(
+                this.messageFactory.getAuthorization().orElseThrow());
         msgHandler.run();
 
         LOG.debug("Login successful");
@@ -108,7 +114,14 @@ public class SipConnectionFactory {
         var onResponse = new QueueingSipIncomingMessageHandler();
         var inReader = new SocketInConnectionReader(socket.getInputStream(), onResponse);
 
-        return new ConnectedSipConnection(socket, out, inReader, tag, callId);
+        return new ConnectedSipConnection(
+                socket,
+                out,
+                inReader,
+                this.sipConfiguration.getRegistrar(),
+                this.sipConfiguration.getSipId(),
+                tag,
+                callId);
     }
 
     protected Socket createSocket() throws IOException {
