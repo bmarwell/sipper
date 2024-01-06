@@ -26,6 +26,7 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xbill.DNS.*;
+import org.xbill.DNS.Record;
 
 public final class IpUtil {
 
@@ -53,17 +54,25 @@ public final class IpUtil {
 
     public static String getRegistrarEndpoint(String registrar) {
         try {
-            final var lookup = new Lookup("_sip._udp." + registrar, Type.SRV);
+            final var lookup = getLookupFor(registrar);
             final var answers = lookup.run();
 
-            return Arrays.stream(answers)
-                    .map(rec -> (SRVRecord) rec)
-                    .map(SRVRecord::getTarget)
-                    .map(Name::toString)
-                    .findFirst()
-                    .orElseThrow();
+            return getFirstTargetFromAnswers(answers);
         } catch (TextParseException ex) {
             throw new IllegalStateException(ex);
         }
+    }
+
+    static String getFirstTargetFromAnswers(Record[] answers) {
+        return Arrays.stream(answers)
+                .map(rec -> (SRVRecord) rec)
+                .map(SRVRecord::getTarget)
+                .map(Name::toString)
+                .findFirst()
+                .orElseThrow();
+    }
+
+    static Lookup getLookupFor(String registrar) throws TextParseException {
+        return new Lookup("_sip._udp." + registrar, Type.SRV);
     }
 }
