@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.github.bmarwell.sipper.api;
+package io.github.bmarwell.sipper.api.internal;
 
-/**
- * A sip connection is a handle which denotes an open and (network-wise) valid connection to a SIP registrar.
- *
- * <p>The SipConnection can be acquired via the SipClient, but will almost always be subclassed by {@link RegisteredSipConnection}.</p>
- */
-public interface SipConnection extends AutoCloseable {
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-    void listen(SipEventHandler sipEventHandler);
+import org.junit.jupiter.api.Test;
 
-    boolean isConnected();
+class SipClientBuilderLoaderTest {
 
-    boolean isRegistered();
+    /**
+     * Method contract test
+     */
+    @Test
+    void no_implementation_available_in_API_throws_ISE() {
+        // expect
+        assertThatThrownBy(() -> SipClientBuilderLoader.loadImplementation())
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("implementation found");
+    }
 }

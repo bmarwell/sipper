@@ -23,7 +23,6 @@ import io.github.bmarwell.sipper.impl.ip.IpUtil;
 import io.github.bmarwell.sipper.impl.proto.*;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Base64;
@@ -46,7 +45,7 @@ public class SipConnectionFactory {
         this.messageFactory = new SipMessageFactory(this.sipConfiguration);
     }
 
-    public SipConnection build() {
+    public SipConnection build() throws IOException {
         final var tagBytes = new byte[12];
         final var callIdBytes = new byte[12];
         RandomGeneratorFactory.getDefault().create().nextBytes(tagBytes);
@@ -55,12 +54,7 @@ public class SipConnectionFactory {
         var tag = encoder.encodeToString(tagBytes).replaceAll("/", "g");
         var callId = encoder.encodeToString(callIdBytes).replaceAll("/", "g");
 
-        try {
-            return buildSocketSipConnection(tag, callId);
-        } catch (IOException ioException) {
-            LOG.error("Problem creating SipConnection.", ioException);
-            throw new UncheckedIOException(ioException);
-        }
+        return buildSocketSipConnection(tag, callId);
     }
 
     public RegisteredSipConnection register(SipConnection sipConnection) {

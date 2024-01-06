@@ -19,6 +19,7 @@ import io.github.bmarwell.sipper.api.RegisteredSipConnection;
 import io.github.bmarwell.sipper.api.SipClient;
 import io.github.bmarwell.sipper.api.SipConfiguration;
 import io.github.bmarwell.sipper.impl.internal.SipConnectionFactory;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +34,7 @@ public class DefaultSipClient implements SipClient {
     }
 
     @Override
-    public RegisteredSipConnection connect() {
+    public RegisteredSipConnection connect() throws IOException {
         final var sipConnectionFactory = new SipConnectionFactory(this.sipConfiguration);
 
         LOG.trace("Connecting…");

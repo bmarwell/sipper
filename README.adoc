@@ -12,7 +12,11 @@ toc::[]
 
 == Development status
 
-Started, no releases.
+There is a basic set of interfaces in the API.
+Using the API and a configuration, it is possible to connect (REGISTER) and disconnect (UNREGISTER aka REGISTER with Expires: 0).
+Incoming calls are being detected, but not yet routed to the SipEventHandler class.
+
+There is basically no test yet, except a few which are being used for development.
 
 == API stability
 
