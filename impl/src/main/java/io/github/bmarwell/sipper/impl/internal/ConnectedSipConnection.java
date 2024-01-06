@@ -22,6 +22,7 @@ import java.io.BufferedOutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -50,9 +51,19 @@ public class ConnectedSipConnection implements SipConnection {
     private final Future<?> inReaderThread;
     private final String tag;
     private final String callId;
+    private final String registrar;
+    private final String sipId;
+
+    private String authorizationString;
 
     public ConnectedSipConnection(
-            Socket socket, BufferedOutputStream out, SocketInConnectionReader inReader, String tag, String callId) {
+            Socket socket,
+            BufferedOutputStream out,
+            SocketInConnectionReader inReader,
+            String registrar,
+            String sipId,
+            String tag,
+            String callId) {
         this.socket = socket;
         this.out = out;
         this.outWriter = new PrintWriter(out, false, StandardCharsets.UTF_8);
@@ -60,6 +71,8 @@ public class ConnectedSipConnection implements SipConnection {
         this.executorService = Executors.newVirtualThreadPerTaskExecutor();
         this.inReaderThread = this.executorService.submit(inReader);
 
+        this.registrar = registrar;
+        this.sipId = sipId;
         this.tag = tag;
         this.callId = callId;
     }
@@ -105,6 +118,14 @@ public class ConnectedSipConnection implements SipConnection {
         return this.cseq.getAndUpdate(operand -> operand + 1L);
     }
 
+    public String getRegistrar() {
+        return this.registrar;
+    }
+
+    public String getSipId() {
+        return this.sipId;
+    }
+
     public Socket getSocket() {
         return this.socket;
     }
@@ -115,6 +136,14 @@ public class ConnectedSipConnection implements SipConnection {
 
     public String getCallId() {
         return callId;
+    }
+
+    public Optional<String> getAuthorization() {
+        return Optional.ofNullable(this.authorizationString);
+    }
+
+    public void setAuthorizationString(String authorizationString) {
+        this.authorizationString = authorizationString;
     }
 
     protected BufferedOutputStream getOut() {
