@@ -18,6 +18,7 @@ package io.github.bmarwell.sipper.impl.internal;
 import io.github.bmarwell.sipper.api.RegisteredSipConnection;
 import io.github.bmarwell.sipper.api.SipEventHandler;
 import io.github.bmarwell.sipper.impl.proto.SipMessageFactory;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Optional;
 
@@ -27,7 +28,7 @@ public class DefaultRegisteredSipConnection implements RegisteredSipConnection {
     private boolean closedByHook;
     private boolean registered;
 
-    private Thread shutdownHook;
+    private final Thread shutdownHook;
 
     public DefaultRegisteredSipConnection(ConnectedSipConnection sipConnection) {
         this.sipConnection = sipConnection;
@@ -59,6 +60,11 @@ public class DefaultRegisteredSipConnection implements RegisteredSipConnection {
     }
 
     @Override
+    public InetAddress getPublicIp() {
+        return this.sipConnection.getPublicIp();
+    }
+
+    @Override
     public void close() throws Exception {
         if (!closedByHook) {
             try {
@@ -71,9 +77,15 @@ public class DefaultRegisteredSipConnection implements RegisteredSipConnection {
         final var unregister = new SipMessageFactory(this.sipConnection.getRegistrar(), this.sipConnection.getSipId())
                 .getUnregister(this);
         this.sipConnection.writeAndFlush(unregister);
+
         // short amount of time of judiciously waiting for a response, as we don't want to unnecessarily lengthen the
         // shutdown.
-        Thread.sleep(100);
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException ie) {
+            // ignore on shutdown
+        }
+
         this.sipConnection.close();
     }
 

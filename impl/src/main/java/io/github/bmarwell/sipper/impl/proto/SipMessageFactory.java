@@ -25,8 +25,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.HexFormat;
 import java.util.Locale;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.random.RandomGeneratorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,21 +33,8 @@ public class SipMessageFactory {
 
     private static final Logger LOG = LoggerFactory.getLogger(SipMessageFactory.class);
 
-    /**
-     * Public IP -- however, instead, the getRegister(preflight) should return a response object which contains
-     * the public IP, which then gets stored into the connection object.
-     *
-     * <p>Some for the getLogin, which should instead return an object instead of saving the authorization to a field.
-     */
-    private static final AtomicReference<InetAddress> PUBLIC_IP = new AtomicReference<>();
-
     private final String registrar;
     private final String sipId;
-
-    /**
-     * TODO: remove this field, return a record from getLogin instead.
-     */
-    private String authorization;
 
     public SipMessageFactory(SipConfiguration conf) {
         this.registrar = conf.getRegistrar();
@@ -61,9 +46,7 @@ public class SipMessageFactory {
         this.sipId = sipId;
     }
 
-    public String getRegisterPreflight(InetAddress publicIp, ConnectedSipConnection sipConnection) {
-        SipMessageFactory.PUBLIC_IP.compareAndSet(null, publicIp);
-
+    public String getRegisterPreflight(ConnectedSipConnection sipConnection) {
         final var template =
                 """
                 %1$s sip:%2$s SIP/2.0
@@ -96,7 +79,7 @@ public class SipMessageFactory {
                 // 5 - CallId
                 sipConnection.getCallId(),
                 // 6 - public IP
-                publicIp.getHostAddress(),
+                sipConnection.getPublicIp().getHostAddress(),
                 // 7 - socket local port
                 sipConnection.getSocket().getLocalPort(),
                 // 8 - socket local address
@@ -149,7 +132,7 @@ public class SipMessageFactory {
         }
     }
 
-    public String getLogin(
+    public LoginRequest getLogin(
             SipAuthenticationRequest sipAuthenticationRequest,
             ConnectedSipConnection sipConnection,
             String loginUserId,
@@ -185,8 +168,6 @@ public class SipMessageFactory {
                 // end
                 );
 
-        this.authorization = authValue;
-
         String template =
                 """
                 %1$s sip:%2$s SIP/2.0
@@ -206,7 +187,7 @@ public class SipMessageFactory {
 
                 """;
 
-        return String.format(
+        final var register = String.format(
                 //
                 Locale.ROOT,
                 template,
@@ -221,7 +202,7 @@ public class SipMessageFactory {
                 // 5 - CallId
                 sipConnection.getCallId(),
                 // 6 - public IP
-                PUBLIC_IP.get().getHostAddress(),
+                sipConnection.getPublicIp().getHostAddress(),
                 // 7 - socket local port
                 sipConnection.getSocket().getLocalPort(),
                 // 8 - socket local address
@@ -232,6 +213,8 @@ public class SipMessageFactory {
                 authValue
                 // end
                 );
+
+        return new LoginRequest(register, authValue);
     }
 
     public String getUnregister(DefaultRegisteredSipConnection registeredSipConnection) {
@@ -268,7 +251,7 @@ public class SipMessageFactory {
                 // 5 - CallId
                 registeredSipConnection.getCallId(),
                 // 6 - public IP
-                PUBLIC_IP.get().getHostAddress(),
+                registeredSipConnection.getPublicIp().getHostAddress(),
                 // 7 - socket local port
                 registeredSipConnection.getSocket().getLocalPort(),
                 // 8 - socket local address
@@ -281,14 +264,14 @@ public class SipMessageFactory {
                 );
     }
 
-    public Optional<String> getAuthorization() {
-        return Optional.ofNullable(authorization);
-    }
-
     /**
      *
      * @param response The response string (hashed and hashed again...).
      * @param clientNonce The client nonce.
      */
     private record AuthorizationResponse(String response, String clientNonce) {}
+
+    public record RegisterPreflightRequest(String message, InetAddress publicIp) {}
+
+    public record LoginRequest(String message, String authorization) {}
 }

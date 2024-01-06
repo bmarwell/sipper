@@ -43,10 +43,6 @@ class RealConnectionIT {
                     .matches(SipConnection::isConnected);
 
             await().atMost(2_000L, TimeUnit.MILLISECONDS).until(connect::isRegistered);
-
-            while (true) {
-                Thread.sleep(200L);
-            }
         } catch (Exception ioException) {
             Assertions.fail("could not connect.", ioException);
         }

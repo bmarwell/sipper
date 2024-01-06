@@ -20,6 +20,7 @@ import io.github.bmarwell.sipper.api.SipEventHandler;
 import io.github.bmarwell.sipper.impl.SocketInConnectionReader;
 import java.io.BufferedOutputStream;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
@@ -54,6 +55,7 @@ public class ConnectedSipConnection implements SipConnection {
     private final String registrar;
     private final String sipId;
 
+    private InetAddress publicIp;
     private String authorizationString;
 
     public ConnectedSipConnection(
@@ -63,7 +65,8 @@ public class ConnectedSipConnection implements SipConnection {
             String registrar,
             String sipId,
             String tag,
-            String callId) {
+            String callId,
+            InetAddress publicIp) {
         this.socket = socket;
         this.out = out;
         this.outWriter = new PrintWriter(out, false, StandardCharsets.UTF_8);
@@ -75,6 +78,7 @@ public class ConnectedSipConnection implements SipConnection {
         this.sipId = sipId;
         this.tag = tag;
         this.callId = callId;
+        this.publicIp = publicIp;
     }
 
     @Override
@@ -94,6 +98,11 @@ public class ConnectedSipConnection implements SipConnection {
         return false;
     }
 
+    @Override
+    public InetAddress getPublicIp() {
+        return this.publicIp;
+    }
+
     protected void writeAndFlush(String message) {
         this.outWriterLock.lock();
         try {
@@ -110,7 +119,13 @@ public class ConnectedSipConnection implements SipConnection {
         this.inReader.interrupt();
         this.inReaderThread.cancel(true);
         this.executorService.shutdownNow();
-        this.executorService.awaitTermination(10, TimeUnit.MILLISECONDS);
+
+        try {
+            this.executorService.awaitTermination(10, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ie) {
+            // ignore on close
+        }
+
         this.socket.close();
     }
 
