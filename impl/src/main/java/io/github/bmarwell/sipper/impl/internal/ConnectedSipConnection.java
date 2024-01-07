@@ -18,6 +18,10 @@ package io.github.bmarwell.sipper.impl.internal;
 import io.github.bmarwell.sipper.api.SipConnection;
 import io.github.bmarwell.sipper.api.SipEventHandler;
 import io.github.bmarwell.sipper.impl.SocketInConnectionReader;
+import io.github.bmarwell.sipper.impl.proto.GenericSipIncomingMessageHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedOutputStream;
 import java.io.PrintWriter;
 import java.net.InetAddress;
@@ -31,8 +35,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ConnectedSipConnection implements SipConnection {
 
@@ -55,7 +57,7 @@ public class ConnectedSipConnection implements SipConnection {
     private final String registrar;
     private final String sipId;
 
-    private InetAddress publicIp;
+    private final InetAddress publicIp;
     private String authorizationString;
 
     public ConnectedSipConnection(
@@ -83,9 +85,7 @@ public class ConnectedSipConnection implements SipConnection {
 
     @Override
     public void listen(SipEventHandler sipEventHandler) {
-        // TODO: implement
-        throw new UnsupportedOperationException(
-                "not yet implemented: [io.github.bmarwell.sipper.impl.internal.ConnectedSipConnection::listen].");
+        // Should be overridden by RegisteredSipConnection
     }
 
     @Override
@@ -127,6 +127,10 @@ public class ConnectedSipConnection implements SipConnection {
         }
 
         this.socket.close();
+    }
+
+    public void registerIncomingMessageHandler(GenericSipIncomingMessageHandler incomingMessageHandler) {
+        this.inReader.addMessageHandler(incomingMessageHandler);
     }
 
     public long getAndUpdateCseq() {

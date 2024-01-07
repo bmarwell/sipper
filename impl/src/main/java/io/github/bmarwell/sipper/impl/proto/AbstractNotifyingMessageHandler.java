@@ -19,12 +19,12 @@ import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractNotifyingMessageHandler implements Runnable {
 
-    private final QueueingSipIncomingMessageHandler queueingSipIncomingMessageHandler;
+    private final RegisterSipIncomingMessageHandler registerSipIncomingMessageHandler;
 
     private boolean interrupted = false;
 
-    public AbstractNotifyingMessageHandler(QueueingSipIncomingMessageHandler queueingSipIncomingMessageHandler) {
-        this.queueingSipIncomingMessageHandler = queueingSipIncomingMessageHandler;
+    public AbstractNotifyingMessageHandler(RegisterSipIncomingMessageHandler registerSipIncomingMessageHandler) {
+        this.registerSipIncomingMessageHandler = registerSipIncomingMessageHandler;
     }
 
     abstract void onMessageReceived(RawSipMessage message);
@@ -46,11 +46,11 @@ public abstract class AbstractNotifyingMessageHandler implements Runnable {
                 return;
             }
 
-            var msgFound = this.queueingSipIncomingMessageHandler.getMessages().stream()
+            var msgFound = this.registerSipIncomingMessageHandler.getMessages().stream()
                     .filter(this::matchesMessage)
                     .findFirst();
             if (msgFound.isPresent()) {
-                this.queueingSipIncomingMessageHandler.remove(msgFound.orElseThrow());
+                this.registerSipIncomingMessageHandler.remove(msgFound.orElseThrow());
                 onMessageReceived(msgFound.orElseThrow());
                 break;
             }

@@ -19,4 +19,21 @@ package io.github.bmarwell.sipper.api;
  * A SipConnection with the {@literal "registered"} status, i.e. the connection did send a REGISTER command which was accepted
  * by the registrar.
  */
-public interface RegisteredSipConnection extends SipConnection {}
+public interface RegisteredSipConnection extends SipConnection {
+
+    /**
+     * Send a {@code SIP/2.0 486 Busy Here}.
+     * @param inviteInformation the invitation to reply to.
+     */
+    void sendBusy(SipEventHandler.SipInviteEvent inviteInformation);
+
+    /**
+     * Sends a {@code SIP/2.0 183 Session in Progress}.
+     *
+     * <p>The advantage over {@code SIP/2.0 100 Ringing} is that UAC and UAS and Caller
+     * can already start opening a connection (early media).
+     * This way, no time (speech) at the beginning of the session is lost.</p>
+     * @param inviteInformation the invitation to reply to.
+     */
+    void sendRingAndSessionProgress(SipEventHandler.SipInviteEvent inviteInformation);
+}

@@ -15,19 +15,24 @@
  */
 package io.github.bmarwell.sipper.impl;
 
-import io.github.bmarwell.sipper.impl.proto.QueueingSipIncomingMessageHandler;
 import io.github.bmarwell.sipper.impl.proto.RawSipMessage;
+import io.github.bmarwell.sipper.impl.proto.RegisterSipIncomingMessageHandler;
+import io.github.bmarwell.sipper.impl.proto.SipIncomingMessageHandler;
 import io.github.bmarwell.sipper.impl.util.LangUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.SocketException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class SocketInConnectionReader implements Runnable {
 
@@ -36,12 +41,15 @@ public class SocketInConnectionReader implements Runnable {
     private ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
 
     private final BufferedReader socketReader;
-    private final QueueingSipIncomingMessageHandler msgHandler;
+    private final RegisterSipIncomingMessageHandler registerSipIncomingMessageHandler;
+    private final Set<SipIncomingMessageHandler> messageHandlers = new HashSet<>();
+
     private boolean interrupted = false;
 
-    public SocketInConnectionReader(InputStream socketInput, QueueingSipIncomingMessageHandler msgHandler) {
+    public SocketInConnectionReader(
+            InputStream socketInput, RegisterSipIncomingMessageHandler registerSipIncomingMessageHandler) {
         this.socketReader = new BufferedReader(new InputStreamReader(socketInput));
-        this.msgHandler = msgHandler;
+        this.registerSipIncomingMessageHandler = registerSipIncomingMessageHandler;
     }
 
     @Override
@@ -77,7 +85,7 @@ public class SocketInConnectionReader implements Runnable {
                     }
 
                     try {
-                        CompletableFuture.runAsync(() -> this.msgHandler.accept(rawSipMessage), executorService);
+                        sendToAllMessageHandlers(rawSipMessage);
                     } catch (Exception e) {
                         LOG.trace("Unable to process message.", e);
                     }
@@ -125,7 +133,7 @@ public class SocketInConnectionReader implements Runnable {
             LOG.warn("Not enough bytes read! Expected [" + bodyLength + "] but got " + read + "!");
         }
 
-        final var rawSipMessage = new RawSipMessage(currentMessageString, bodyContent);
+        final var rawSipMessage = new RawSipMessage(currentMessageString, new String(bodyContent));
         LOG.trace("Received raw sip message: [{}]", rawSipMessage);
         return rawSipMessage;
     }
@@ -139,8 +147,26 @@ public class SocketInConnectionReader implements Runnable {
         }
     }
 
-    public QueueingSipIncomingMessageHandler getMsgHandler() {
-        return msgHandler;
+    public RegisterSipIncomingMessageHandler getRegisterSipIncomingMessageHandler() {
+        return registerSipIncomingMessageHandler;
+    }
+
+    public void sendToAllMessageHandlers(RawSipMessage sipMessage) {
+        CompletableFuture.runAsync(() -> this.registerSipIncomingMessageHandler.accept(sipMessage), executorService);
+
+        for (SipIncomingMessageHandler messageHandler : messageHandlers) {
+            CompletableFuture.runAsync(() -> messageHandler.accept(sipMessage), executorService);
+            // TODO: add exception logging here?
+        }
+    }
+
+    public void setMessageHandlers(final Collection<SipIncomingMessageHandler> messageHandlers) {
+        this.messageHandlers.addAll(messageHandlers);
+        this.messageHandlers.removeIf(msgH -> !messageHandlers.contains(msgH));
+    }
+
+    public void addMessageHandler(final SipIncomingMessageHandler messageHandler) {
+        this.messageHandlers.add(messageHandler);
     }
 
     public void interrupt() {

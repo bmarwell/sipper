@@ -21,12 +21,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public record RawSipMessage(String rawMessageHeader, String method, Map<String, String> header, char[] rawBody) {
+public record RawSipMessage(String rawMessageHeader, String method, Map<String, String> header, String rawBody) {
     public RawSipMessage(final String rawMessageHeader) {
-        this(rawMessageHeader, getMethod(rawMessageHeader), getHeaders(rawMessageHeader), new char[0]);
+        this(rawMessageHeader, getMethod(rawMessageHeader), getHeaders(rawMessageHeader), "");
     }
 
-    public RawSipMessage(final String rawMessageHeader, final char[] body) {
+    public RawSipMessage(final String rawMessageHeader, final String body) {
         this(rawMessageHeader, getMethod(rawMessageHeader), getHeaders(rawMessageHeader), body);
     }
 
@@ -58,6 +58,6 @@ public record RawSipMessage(String rawMessageHeader, String method, Map<String, 
     }
 
     public boolean hasBody() {
-        return rawBody.length > 0;
+        return !rawBody.isEmpty();
     }
 }

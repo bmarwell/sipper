@@ -17,7 +17,7 @@ package io.github.bmarwell.sipper.impl.proto;
 
 public class NotifyingSipLoginRequestHandler extends AbstractNotifyingMessageHandler {
 
-    public NotifyingSipLoginRequestHandler(QueueingSipIncomingMessageHandler msgHandler) {
+    public NotifyingSipLoginRequestHandler(RegisterSipIncomingMessageHandler msgHandler) {
         super(msgHandler);
     }
 

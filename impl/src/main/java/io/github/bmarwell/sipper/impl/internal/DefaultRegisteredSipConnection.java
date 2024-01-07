@@ -17,10 +17,13 @@ package io.github.bmarwell.sipper.impl.internal;
 
 import io.github.bmarwell.sipper.api.RegisteredSipConnection;
 import io.github.bmarwell.sipper.api.SipEventHandler;
+import io.github.bmarwell.sipper.impl.proto.GenericSipIncomingMessageHandler;
 import io.github.bmarwell.sipper.impl.proto.SipMessageFactory;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 public class DefaultRegisteredSipConnection implements RegisteredSipConnection {
 
@@ -30,9 +33,15 @@ public class DefaultRegisteredSipConnection implements RegisteredSipConnection {
 
     private final Thread shutdownHook;
 
+    private final Set<SipEventHandler> listeners = new HashSet<>();
+    private final GenericSipIncomingMessageHandler incomingMessageHandler =
+            new GenericSipIncomingMessageHandler(this, this.listeners);
+
     public DefaultRegisteredSipConnection(ConnectedSipConnection sipConnection) {
         this.sipConnection = sipConnection;
         this.registered = true;
+        this.sipConnection.registerIncomingMessageHandler(incomingMessageHandler);
+
         this.shutdownHook = new Thread(() -> {
             try {
                 this.closedByHook = true;
@@ -46,7 +55,8 @@ public class DefaultRegisteredSipConnection implements RegisteredSipConnection {
 
     @Override
     public void listen(SipEventHandler sipEventHandler) {
-        this.sipConnection.listen(sipEventHandler);
+        this.listeners.add(sipEventHandler);
+        this.incomingMessageHandler.setListeners(this.listeners);
     }
 
     @Override
@@ -107,5 +117,19 @@ public class DefaultRegisteredSipConnection implements RegisteredSipConnection {
 
     public Optional<String> getAuthorization() {
         return this.sipConnection.getAuthorization();
+    }
+
+    @Override
+    public void sendBusy(SipEventHandler.SipInviteEvent inviteInformation) {
+        // TODO: implement
+        throw new UnsupportedOperationException(
+                "not yet implemented: [io.github.bmarwell.sipper.impl.internal.DefaultRegisteredSipConnection::sendBusy].");
+    }
+
+    @Override
+    public void sendRingAndSessionProgress(SipEventHandler.SipInviteEvent inviteInformation) {
+        // TODO: implement
+        throw new UnsupportedOperationException(
+                "not yet implemented: [io.github.bmarwell.sipper.impl.internal.DefaultRegisteredSipConnection::sendRingAndSessionProgress].");
     }
 }

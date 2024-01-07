@@ -15,4 +15,11 @@
  */
 package io.github.bmarwell.sipper.api;
 
-public interface SipEventHandler {}
+public interface SipEventHandler {
+    default void onRing(RegisteredSipConnection connection, SipInviteEvent inviteInformation) {
+        // decline by default
+        connection.sendBusy(inviteInformation);
+    }
+
+    record SipInviteEvent() {}
+}
