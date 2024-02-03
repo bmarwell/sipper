@@ -19,9 +19,6 @@ import io.github.bmarwell.sipper.impl.proto.RawSipMessage;
 import io.github.bmarwell.sipper.impl.proto.RegisterSipIncomingMessageHandler;
 import io.github.bmarwell.sipper.impl.proto.SipIncomingMessageHandler;
 import io.github.bmarwell.sipper.impl.util.LangUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +30,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SocketInConnectionReader implements Runnable {
 

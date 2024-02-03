@@ -121,9 +121,10 @@ public class DefaultRegisteredSipConnection implements RegisteredSipConnection {
 
     @Override
     public void sendBusy(SipEventHandler.SipInviteEvent inviteInformation) {
-        // TODO: implement
-        throw new UnsupportedOperationException(
-                "not yet implemented: [io.github.bmarwell.sipper.impl.internal.DefaultRegisteredSipConnection::sendBusy].");
+        final var sipMessageFactory =
+                new SipMessageFactory(this.sipConnection.getRegistrar(), this.sipConnection.getSipId());
+        final var busy = sipMessageFactory.getBusy(this, inviteInformation);
+        this.sipConnection.writeAndFlush(busy);
     }
 
     @Override

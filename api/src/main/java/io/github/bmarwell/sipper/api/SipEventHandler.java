@@ -21,5 +21,5 @@ public interface SipEventHandler {
         connection.sendBusy(inviteInformation);
     }
 
-    record SipInviteEvent() {}
+    record SipInviteEvent(String callId, String caller, int cseq, String via) {}
 }

@@ -17,6 +17,7 @@ package io.github.bmarwell.sipper.impl.proto;
 
 import io.github.bmarwell.sipper.api.RegisteredSipConnection;
 import io.github.bmarwell.sipper.api.SipEventHandler;
+import io.github.bmarwell.sipper.impl.util.LangUtil;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -42,10 +43,24 @@ public class GenericSipIncomingMessageHandler implements SipIncomingMessageHandl
 
         // pass
         if (sipMessage.method().equals("INVITE")) {
+            final var cSeqStr = sipMessage.header().get("CSeq").trim();
+            final var cseqOpt = LangUtil.isIntegerOrEmpty(cSeqStr.split(" ")[0]);
+            if (cseqOpt.isEmpty()) {
+                LOG.error("Message did not have valid cseq: " + cSeqStr);
+                throw new IllegalArgumentException("Message did not have valid cseq: " + cSeqStr);
+            }
+            final var inviteEvent = new SipEventHandler.SipInviteEvent(
+                    sipMessage.header().get("Call-ID"),
+                    sipMessage.header().get("From"),
+                    cseqOpt.getAsInt(),
+                    sipMessage.header().get("Via"));
             for (SipEventHandler listener : this.listeners) {
-                // TODO: try
-                LOG.info("RING RING to " + listener);
-                listener.onRing(this.registeredSipConnection, null);
+                LOG.trace("RING RING to " + listener);
+                try {
+                    listener.onRing(this.registeredSipConnection, inviteEvent);
+                } catch (RuntimeException rtEx) {
+                    LOG.error("listener " + listener + " threw exception with onRing()", rtEx);
+                }
             }
         }
     }

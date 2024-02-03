@@ -19,9 +19,6 @@ import io.github.bmarwell.sipper.api.SipConnection;
 import io.github.bmarwell.sipper.api.SipEventHandler;
 import io.github.bmarwell.sipper.impl.SocketInConnectionReader;
 import io.github.bmarwell.sipper.impl.proto.GenericSipIncomingMessageHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedOutputStream;
 import java.io.PrintWriter;
 import java.net.InetAddress;
@@ -35,6 +32,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ConnectedSipConnection implements SipConnection {
 

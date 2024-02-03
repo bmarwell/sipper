@@ -38,7 +38,8 @@ public record RawSipMessage(String rawMessageHeader, String method, Map<String, 
                     .filter(line -> line.contains(":"))
                     .map(line -> {
                         var linesplit = line.split(":", 2);
-                        return (Map.Entry<String, String>) new AbstractMap.SimpleEntry<>(linesplit[0], linesplit[1]);
+                        return (Map.Entry<String, String>)
+                                new AbstractMap.SimpleEntry<>(linesplit[0].trim(), linesplit[1].trim());
                     })
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (x, y) -> y, LinkedHashMap::new));
             return Map.copyOf(headers);
