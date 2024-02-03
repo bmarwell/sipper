@@ -33,8 +33,8 @@ public class NotifyingSipIncomingAuthenticationRequestHandler extends AbstractNo
     private SipAuthenticationRequest sipAuthenticationRequest;
 
     public NotifyingSipIncomingAuthenticationRequestHandler(
-            QueueingSipIncomingMessageHandler queueingSipIncomingMessageHandler) {
-        super(queueingSipIncomingMessageHandler);
+            RegisterSipIncomingMessageHandler registerSipIncomingMessageHandler) {
+        super(registerSipIncomingMessageHandler);
     }
 
     @Override

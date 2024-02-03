@@ -74,7 +74,7 @@ public class SipConnectionFactory {
 
     private void doRegister(SipAuthenticationRequest authRequest, ConnectedSipConnection connectedSipConnection) {
         final var msgHandler = new NotifyingSipLoginRequestHandler(
-                connectedSipConnection.getInReader().getMsgHandler());
+                connectedSipConnection.getInReader().getRegisterSipIncomingMessageHandler());
 
         final var login = this.messageFactory.getLogin(
                 authRequest,
@@ -93,7 +93,8 @@ public class SipConnectionFactory {
 
         connectedSipConnection.writeAndFlush(message);
 
-        final var msgHandler = new NotifyingSipIncomingAuthenticationRequestHandler(inReader.getMsgHandler());
+        final var msgHandler =
+                new NotifyingSipIncomingAuthenticationRequestHandler(inReader.getRegisterSipIncomingMessageHandler());
         msgHandler.run();
 
         return msgHandler.getSipAuthenticationRequest();
@@ -103,7 +104,7 @@ public class SipConnectionFactory {
         var socket = createSocket();
         var out = new BufferedOutputStream(socket.getOutputStream());
 
-        var onResponse = new QueueingSipIncomingMessageHandler();
+        var onResponse = new RegisterSipIncomingMessageHandler();
         var inReader = new SocketInConnectionReader(socket.getInputStream(), onResponse);
 
         return new ConnectedSipConnection(
