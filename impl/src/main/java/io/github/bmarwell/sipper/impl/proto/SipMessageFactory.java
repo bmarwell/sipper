@@ -16,6 +16,7 @@
 package io.github.bmarwell.sipper.impl.proto;
 
 import io.github.bmarwell.sipper.api.SipConfiguration;
+import io.github.bmarwell.sipper.api.SipEventHandler;
 import io.github.bmarwell.sipper.impl.internal.ConnectedSipConnection;
 import io.github.bmarwell.sipper.impl.internal.DefaultRegisteredSipConnection;
 import java.net.InetAddress;
@@ -260,6 +261,55 @@ public class SipMessageFactory {
                 registeredSipConnection.getAndUpdateCseq(),
                 // 10 - auth,
                 registeredSipConnection.getAuthorization().orElse("")
+                // end
+                );
+    }
+
+    public String getBusy(
+            final DefaultRegisteredSipConnection registeredSipConnection,
+            final SipEventHandler.SipInviteEvent inviteInformation) {
+        // this is reversed.
+        // TO is "us",
+        // FROM is the caller
+        var template =
+                """
+                SIP/2.0 486 Busy Here
+                CSeq: %9$s %1$s
+                Via: %11$s
+                From: %10$s
+                To: <sip:%3$s@%2$s>;tag=%4$s
+                Call-ID: %5$s
+                Warning: 399 "User reject"
+                User-Agent: SIPper/0.1.0
+                Content-Length: 0
+                """;
+
+        return String.format(
+                //
+                Locale.ROOT,
+                template,
+                // 1 - method
+                "INVITE",
+                // 2- registrar
+                this.registrar,
+                // 3 - sipID
+                this.sipId,
+                // 4 - tag
+                registeredSipConnection.getTag(),
+                // 5 - CallId
+                inviteInformation.callId(),
+                // 6 - public IP
+                registeredSipConnection.getPublicIp().getHostAddress(),
+                // 7 - socket local port
+                registeredSipConnection.getSocket().getLocalPort(),
+                // 8 - socket local address
+                registeredSipConnection.getSocket().getLocalAddress().getHostAddress(),
+                // 9 - CSeq
+                inviteInformation.cseq(),
+                // 10 - to,
+                inviteInformation.caller(),
+                // 11 - via
+                inviteInformation.via()
                 // end
                 );
     }
