@@ -21,7 +21,7 @@ jobs:
           show-progress: false
 
       - name: Cache local Maven Build Cache
-        uses: actions/cache@v4
+        uses: actions/cache@v4.2.3
         if: ${{ github.ref_name != 'main' }}
         with:
           path: ~/.m2/build-cache
