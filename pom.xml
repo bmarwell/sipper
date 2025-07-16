@@ -34,7 +34,7 @@
     <immutables-value.version>2.11.1</immutables-value.version>
 
     <!-- plugin dependencies -->
-    <palantir-java-format.version>2.70.0</palantir-java-format.version>
+    <palantir-java-format.version>2.71.0</palantir-java-format.version>
   </properties>
 
   <dependencyManagement>
