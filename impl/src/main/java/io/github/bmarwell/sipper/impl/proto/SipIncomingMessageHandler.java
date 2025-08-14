@@ -17,6 +17,4 @@ package io.github.bmarwell.sipper.impl.proto;
 
 public interface SipIncomingMessageHandler {
     void accept(RawSipMessage sipMessage);
-
-    void remove(RawSipMessage message);
 }

@@ -20,9 +20,9 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class QueueingSipIncomingMessageHandler implements SipIncomingMessageHandler {
+public class RegisterSipIncomingMessageHandler implements SipIncomingMessageHandler {
 
-    private static final Logger LOG = LoggerFactory.getLogger(QueueingSipIncomingMessageHandler.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RegisterSipIncomingMessageHandler.class);
 
     private final ArrayList<RawSipMessage> messages = new ArrayList<>();
 
@@ -30,14 +30,9 @@ public class QueueingSipIncomingMessageHandler implements SipIncomingMessageHand
     public void accept(RawSipMessage sipMessage) {
         LOG.trace("Incoming message:\n[{}]", sipMessage);
 
-        switch (sipMessage.method()) {
-            case "REGISTER":
-                this.messages.add(sipMessage);
-                break;
-            case "INVITE":
-            default:
-                throw new UnsupportedOperationException(
-                        "not yet implemented: [io.github.bmarwell.sipper.impl.proto.QueueingSipIncomingMessageHandler::accept].");
+        // pass
+        if (sipMessage.method().equals("REGISTER")) {
+            this.messages.add(sipMessage);
         }
     }
 
